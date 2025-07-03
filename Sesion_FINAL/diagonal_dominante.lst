@@ -1,0 +1,180 @@
+ASxxxx Assembler V05.00  (Motorola 6809), page 1.
+Hexidecimal [16-Bits]
+
+
+
+                              1 .module diagonal_dominante
+                              2 .globl diagonal_dominante
+                              3 .globl filas, columnas, imprime_cadena, imprime_decimal
+                              4 
+                              5 .globl m, pantalla
+                              6 
+                              7 ; Constantes
+                     FF00     8 pantalla    .equ 0xFF00
+                     E000     9 m           .equ 0xE000
+                             10 
+                             11 ; Variables temporales
+                             12 
+   0000 00                   13 fila_actual:    .byte 0
+   0001 00 00                14 suma_fila:      .word 0
+   0003 00 00                15 elemento_diag:  .word 0
+   0005 01                   16 es_dominante:   .byte 1  ; 1 = verdadero, 0 = falso
+   0006 0A 53 75 6D 61 3A    17 msgSuma:     .asciz "\nSuma: "
+        20 00
+   000E 20 7C 20 44 69 61    18 msgDiagonal: .asciz " | Diagonal: "
+        67 6F 6E 61 6C 3A
+        20 00
+                             19 
+   001C                      20 diagonal_dominante:
+   001C 34 36         [ 9]   21     pshs X,Y,D
+   001E 86 01         [ 2]   22     lda #1
+   0020 B7 00 05      [ 5]   23     sta es_dominante      ; Inicializar en verdadero
+   0023 7F 00 00      [ 7]   24     clr fila_actual       ; Reiniciar contador
+                             25 
+   0026                      26 bucle_filas:
+                             27     ; --- Paso 1: calcular inicio de la fila i ---
+   0026 B6 00 00      [ 5]   28     lda fila_actual        ; A ← fila_actual (i)
+   0029 F6 00 00      [ 5]   29     ldb columnas           ; B ← número de columnas
+   002C 3D            [11]   30     mul                    ; D ← A*B = i*columnas
+   002D 58            [ 2]   31     lslb                   ; desplazar D_low << 1 → D_low = D_low*2
+   002E 49            [ 2]   32     rola                   ; desplazar D_high con carry → D = D*2
+   002F 8E E0 00      [ 3]   33     ldx #m                 ; X ← base de la matriz (0xE000)
+   0032 30 8B         [ 8]   34     leax D,X               ; X ← X + D = dirección del primer elemento de la fila i
+                             35     
+                             36     
+                             37 
+                             38 ; --- Obtener elemento diagonal (i,i) ---
+   0034 B6 00 00      [ 5]   39     lda   fila_actual       ; A = i
+   0037 C6 02         [ 2]   40     ldb   #2                ; B = tamaño elemento (2 bytes)
+   0039 3D            [11]   41     mul                     ; D = i*2
+   003A 31 8B         [ 8]   42     leay  D,X               ; Y = X + D = &matriz[i][i]
+   003C EC A4         [ 5]   43     ldd   ,Y                ; D = matriz[i][i]
+   003E FD 00 03      [ 6]   44     std   elemento_diag
+                             45 
+                             46 ; Calcular suma de la fila (excluyendo diagonal)
+   0041 CC 00 00      [ 3]   47     ldd #0
+   0044 FD 00 01      [ 6]   48     std suma_fila
+   0047 C6 00         [ 2]   49     ldb #0              ; Contador de columna
+                             50 
+                             51 ; ================================================
+                             52 ; Bucle para recorrer cada columna de la fila actual
+ASxxxx Assembler V05.00  (Motorola 6809), page 2.
+Hexidecimal [16-Bits]
+
+
+
+                             53 ; y calcular la suma de los elementos (excluyendo la diagonal)
+                             54 ; ================================================
+   0049                      55 bucle_columnas:
+   0049 F1 00 00      [ 5]   56     cmpb columnas          ; ¿Se procesaron todas las columnas?, si columnas es 3 sale del bucle columnas == b
+   004C 27 17         [ 3]   57     beq fin_fila           ; Si sí, salir del bucle
+                             58 
+   004E F1 00 00      [ 5]   59     cmpb fila_actual       ; ¿Es la columna actual la diagonal?
+   0051 27 0D         [ 3]   60     beq saltar_diag        ; Si sí, saltar el elemento
+                             61 
+                             62     ; ---- Sumar elemento no diagonal ----
+   0053 FC 00 01      [ 6]   63     ldd suma_fila         ; D = valor acumulado de suma_fila
+   0056 E3 84         [ 6]   64     addd ,X               ; Sumar el elemento actual (D = D + [X])
+   0058 FD 00 01      [ 6]   65     std suma_fila         ; Actualizar suma_fila
+                             66 
+   005B                      67 avanzar:
+   005B 30 02         [ 5]   68     leax 2,X               ; Avanzar X al siguiente elemento (2 bytes por elemento)
+   005D 5C            [ 2]   69     incb                   ; Incrementar contador de columnas (B)
+   005E 20 E9         [ 3]   70     bra bucle_columnas     ; Repetir bucle
+                             71 
+                             72 ; ---- Saltar elemento diagonal ----
+   0060                      73 saltar_diag:
+   0060 30 02         [ 5]   74     leax 2,X               ; Avanzar X sin sumar el valor 2 bytes
+   0062 5C            [ 2]   75     incb
+   0063 20 E4         [ 3]   76     bra bucle_columnas
+                             77 
+   0065                      78 fin_fila:
+                             79     ; ---- (DEBUG) Imprimir suma_fila y elemento_diag ----
+   0065 8E 00 06      [ 3]   80     ldx #msgSuma
+   0068 BD 00 00      [ 8]   81     jsr imprime_cadena     ; Imprime "Suma: "
+   006B FC 00 01      [ 6]   82     ldd suma_fila
+   006E BD 00 00      [ 8]   83     jsr imprime_decimal    ; Imprime el valor de suma_fila
+   0071 8E 00 0E      [ 3]   84     ldx #msgDiagonal
+   0074 BD 00 00      [ 8]   85     jsr imprime_cadena     ; Imprime " | Diagonal: "
+   0077 FC 00 03      [ 6]   86     ldd elemento_diag
+   007A BD 00 00      [ 8]   87     jsr imprime_decimal    ; Imprime el valor de elemento_diag
+                             88 
+                             89     ; ---- Comparar elemento diagonal con la suma de la fila ----
+   007D FC 00 03      [ 6]   90     ldd elemento_diag      ; Cargar elemento diagonal
+   0080 10 B3 00 01   [ 8]   91     cmpd suma_fila         ; ¿Elemento diagonal >= suma de los demás elementos?
+   0084 2C 05         [ 3]   92     bge sigue_ok           ; Si sí, continuar con la siguiente fila
+                             93     
+                             94     ; ---- Marcar matriz como no dominante ----
+   0086 7F 00 05      [ 7]   95     clr es_dominante       ; es_dominante = 0 (falso)
+   0089 20 0D         [ 3]   96     bra fin_comprobacion   ; Salir del bucle principal
+                             97 
+   008B                      98 sigue_ok:
+   008B 7C 00 00      [ 7]   99     inc fila_actual        ; Incrementar número de fila
+   008E B6 00 00      [ 5]  100     lda fila_actual        
+   0091 B1 00 00      [ 5]  101     cmpa filas             ; ¿Se procesaron todas las filas?
+   0094 25 90         [ 3]  102     blo bucle_filas        ; Si no, repetir bucle
+   0096 20 00         [ 3]  103     bra fin_comprobacion   ; Si sí, salir
+                            104 
+   0098                     105 fin_comprobacion:
+   0098 8E 00 CF      [ 3]  106     ldx #msgEsDominante    ; Cargar mensaje "ES dominante"
+   009B 7D 00 05      [ 7]  107     tst es_dominante       ; Verificar flag es_dominante
+ASxxxx Assembler V05.00  (Motorola 6809), page 3.
+Hexidecimal [16-Bits]
+
+
+
+   009E 27 03         [ 3]  108     beq imprimir_resultado ; Si es 0, cargar mensaje "NO es dominante"
+   00A0 8E 00 AD      [ 3]  109     ldx #msgNOEsDominante
+                            110 
+   00A3                     111 imprimir_resultado:
+   00A3 BD 00 00      [ 8]  112     jsr imprime_cadena     ; Llamar a función de impresión
+   00A6 86 0A         [ 2]  113     lda #'\n               ; Salto de línea
+   00A8 B7 FF 00      [ 5]  114     sta pantalla           ; Enviar a pantalla
+                            115 
+   00AB 35 B6         [10]  116     puls X,Y,D,PC          ; Restaurar registros y retornar
+                            117 
+   00AD                     118 msgNOEsDominante:    
+   00AD 0A 4C 61 20 6D 61   119     .asciz "\nLa matriz NO diagonal dominante."
+        74 72 69 7A 20 4E
+        4F 20 64 69 61 67
+        6F 6E 61 6C 20 64
+        6F 6D 69 6E 61 6E
+        74 65 2E 00
+   00CF                     120 msgEsDominante:    
+   00CF 0A 4C 61 20 6D 61   121     .asciz "\nLa matriz ES es diagonal dominante."
+        74 72 69 7A 20 45
+        53 20 65 73 20 64
+        69 61 67 6F 6E 61
+        6C 20 64 6F 6D 69
+        6E 61 6E 74 65 2E
+        00
+ASxxxx Assembler V05.00  (Motorola 6809), page 4.
+Hexidecimal [16-Bits]
+
+Symbol Table
+
+    .__.$$$.       =   2710 L   |     .__.ABS.       =   0000 G
+    .__.CPU.       =   0000 L   |     .__.H$L.       =   0001 L
+  0 avanzar            005B R   |   0 bucle_columnas     0049 R
+  0 bucle_filas        0026 R   |     columnas           **** GX
+  0 diagonal_domin     001C GR  |   0 elemento_diag      0003 R
+  0 es_dominante       0005 R   |   0 fila_actual        0000 R
+    filas              **** GX  |   0 fin_comprobaci     0098 R
+  0 fin_fila           0065 R   |     imprime_cadena     **** GX
+    imprime_decima     **** GX  |   0 imprimir_resul     00A3 R
+    m              =   E000 G   |   0 msgDiagonal        000E R
+  0 msgEsDominante     00CF R   |   0 msgNOEsDominan     00AD R
+  0 msgSuma            0006 R   |     pantalla       =   FF00 G
+  0 saltar_diag        0060 R   |   0 sigue_ok           008B R
+  0 suma_fila          0001 R
+
+ASxxxx Assembler V05.00  (Motorola 6809), page 5.
+Hexidecimal [16-Bits]
+
+Area Table
+
+[_CSEG]
+   0 _CODE            size   F4   flags C180
+[_DSEG]
+   1 _DATA            size    0   flags C0C0
+

@@ -1,0 +1,94 @@
+ASxxxx Assembler V05.00  (Motorola 6809), page 1.
+Hexidecimal [16-Bits]
+
+
+
+                              1 .module leer
+                              2 
+                     FF01     3 fin         .equ    0xFF01
+                     FF00     4 pantalla    .equ    0xFF00
+                     FF02     5 teclado     .equ    0xFF02
+                              6 
+                              7 .globl leeByte
+                              8 .globl leeDecimal
+                              9 
+   0000 00 00                10 temporal:   .word   0
+                             11 
+   0002 00                   12 num1: .byte 0
+   0003 00                   13 num2: .byte 0
+                             14 
+   0004                      15 leeByte:
+   0004 B6 FF 02      [ 5]   16     	lda teclado
+   0007 80 30         [ 2]   17 	suba #48
+   0009 B7 00 02      [ 5]   18 	sta num1
+   000C B6 FF 02      [ 5]   19 	lda teclado
+   000F 80 30         [ 2]   20 	suba #48
+   0011 B7 00 03      [ 5]   21 	sta num2
+                             22 
+   0014 C6 0A         [ 2]   23 	ldb #10
+   0016 B6 00 02      [ 5]   24 	lda num1
+   0019 3D            [11]   25 	mul
+   001A FB 00 03      [ 5]   26 	addb num2
+                             27 	
+                             28 
+   001D 39            [ 5]   29 	rts	
+                             30 
+   001E                      31 leeDecimal:
+   001E 34 10         [ 6]   32     pshs    X
+   0020 8E 00 00      [ 3]   33     ldx     #0
+   0023 BF 00 00      [ 6]   34     stx     temporal
+                             35 
+   0026 B6 FF 02      [ 5]   36     lda     teclado
+   0029 80 30         [ 2]   37     suba    #'0
+   002B C6 64         [ 2]   38     ldb     #100
+   002D 3D            [11]   39     MUL
+   002E FD 00 00      [ 6]   40     std     temporal
+                             41 
+   0031 B6 FF 02      [ 5]   42     lda     teclado
+   0034 80 30         [ 2]   43     suba    #'0
+   0036 C6 0A         [ 2]   44     ldb     #10
+   0038 3D            [11]   45     MUL
+   0039 F3 00 00      [ 7]   46     addd    temporal
+   003C FD 00 00      [ 6]   47     std     temporal
+                             48 
+   003F B6 FF 02      [ 5]   49     lda     teclado
+   0042 80 30         [ 2]   50     suba    #'0
+   0044 1F 89         [ 6]   51     tfr     A, B
+   0046 4F            [ 2]   52     clra
+   0047 F3 00 00      [ 7]   53     addd    temporal
+   004A FD 00 00      [ 6]   54     std     temporal
+                             55 
+ASxxxx Assembler V05.00  (Motorola 6809), page 2.
+Hexidecimal [16-Bits]
+
+
+
+   004D 10 83 03 E7   [ 5]   56     cmpd    #999
+   0051 23 03         [ 3]   57     bls     fin_leeDecimal
+   0053 CC 03 E7      [ 3]   58     ldd     #999
+                             59 
+   0056                      60 fin_leeDecimal:
+   0056 35 90         [ 7]   61     puls    X, PC
+ASxxxx Assembler V05.00  (Motorola 6809), page 3.
+Hexidecimal [16-Bits]
+
+Symbol Table
+
+    .__.$$$.       =   2710 L   |     .__.ABS.       =   0000 G
+    .__.CPU.       =   0000 L   |     .__.H$L.       =   0001 L
+    fin            =   FF01     |   0 fin_leeDecimal     0056 R
+  0 leeByte            0004 GR  |   0 leeDecimal         001E GR
+  0 num1               0002 R   |   0 num2               0003 R
+    pantalla       =   FF00     |     teclado        =   FF02 
+  0 temporal           0000 R
+
+ASxxxx Assembler V05.00  (Motorola 6809), page 4.
+Hexidecimal [16-Bits]
+
+Area Table
+
+[_CSEG]
+   0 _CODE            size   58   flags C180
+[_DSEG]
+   1 _DATA            size    0   flags C0C0
+

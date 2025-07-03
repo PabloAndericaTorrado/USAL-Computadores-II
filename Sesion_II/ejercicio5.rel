@@ -1,0 +1,31 @@
+XH2
+H 3 areas 7 global symbols 2 banks 1 modes
+G 00 00 80 81 82 83 84 85 86 87 88 89 8A 8B 8C 8D 8E 8F
+B _CSEG base 0 size 0 map 0 flags 0
+B _DSEG base 0 size 0 map 0 flags 4 fsfx _DS
+S .__.ABS. Def0000
+A _CODE size 0 flags CC80 bank 0
+A _DATA size 0 flags CCC0 bank 1
+A PROG size 0 flags D0C
+S num8_noSigno Def0102
+S res_noSigno Def0104
+S programa Def0108
+S num8_Signo Def0103
+S res_conSigno Def0106
+S num16 Def0100
+T 01 00
+R 00 00 00 02
+T 01 00 21 90 01 FF 00 00 00 00
+R 00 00 00 02
+T 01 08
+R 00 00 00 02
+T 01 08 BE 01 00 F6 01 02 3A BF
+R 00 00 00 02 01 03 00 02 01 06 00 02
+T 01 10 01 04 F6 01 03 1D F3
+R 00 00 00 02 01 02 00 02 01 05 00 02
+T 01 17 01 00 FD 01 06 4F B7 FF 01
+R 00 00 00 02 01 02 00 02 01 05 00 02
+T FF FE
+R 00 00 00 02
+T FF FE 01 08
+R 00 00 00 02 01 02 00 02

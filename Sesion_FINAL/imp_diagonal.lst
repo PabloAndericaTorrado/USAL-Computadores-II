@@ -1,0 +1,156 @@
+ASxxxx Assembler V05.00  (Motorola 6809), page 1.
+Hexidecimal [16-Bits]
+
+
+
+                              1 .module imp_diagonal
+                              2 .globl mostrar_diagonal_menor
+                              3 .globl filas, columnas, imprime_decimal
+                              4 
+                     FF00     5 pantalla    .equ 0xFF00
+                     E000     6 m           .equ 0xE000                         ; Dirección matriz en RAM
+                              7 
+                              8 .area BSS
+   0000 00 00                 9 suma_principal:    .word 0
+   0002 00 00                10 suma_secundaria:   .word 0
+   0004 00                   11 contador_diagonal: .byte 0                      ; Índice de elemento actual en la diagonal
+                             12 
+                             13 
+                             14 ; ------------------------- CÓDIGO OPTIMIZADO -------------------------
+   0005                      15 mostrar_diagonal_menor:
+   0005 34 36         [ 9]   16     pshs  X,Y,D
+                             17 
+                             18     ; ========== SUMA DIAGONAL PRINCIPAL ==========
+   0007 8E E0 00      [ 3]   19     ldx   #m                                    ; X = inicio matriz
+   000A 7F 00 04      [ 7]   20     clr   contador_diagonal                     ; Contador = 0
+                             21 
+   000D                      22 bucle_suma_principal:
+   000D EC 84         [ 5]   23     ldd   ,X                                    ; Carga elemento [i][i]
+   000F F3 00 00      [ 7]   24     addd  suma_principal
+   0012 FD 00 00      [ 6]   25     std   suma_principal                        ; Actualiza suma
+                             26 
+   0015 B6 00 00      [ 5]   27     lda   columnas                              ; Offset = (columnas+1)*2
+   0018 4C            [ 2]   28     inca
+   0019 48            [ 2]   29     lsla                                        ; *2 (elementos de 2 bytes)
+   001A 30 86         [ 5]   30     leax  A,X                                   ; X += offset
+                             31 
+   001C 7C 00 04      [ 7]   32     inc   contador_diagonal
+   001F B6 00 04      [ 5]   33     lda   contador_diagonal
+   0022 B1 00 00      [ 5]   34     cmpa  filas                                 ; Usamos FILAS directamente
+   0025 25 E6         [ 3]   35     blo   bucle_suma_principal                  ; (matrices cuadradas)
+                             36 
+                             37     ; ========== SUMA DIAGONAL SECUNDARIA ==========
+   0027 8E E0 00      [ 3]   38     ldx   #m                                    ; Reinicia X
+   002A B6 00 00      [ 5]   39     lda   columnas
+   002D 4A            [ 2]   40     deca                                        ; Offset inicial = (cols-1)*2
+   002E 48            [ 2]   41     lsla
+   002F 30 86         [ 5]   42     leax  A,X                                   ; X = [0][cols-1]
+   0031 7F 00 04      [ 7]   43     clr   contador_diagonal                     ; Contador = 0
+                             44 
+   0034                      45 bucle_suma_secundaria:
+   0034 EC 84         [ 5]   46     ldd   ,X                                    ; Carga elemento [i][cols-1-i]
+   0036 F3 00 02      [ 7]   47     addd  suma_secundaria
+   0039 FD 00 02      [ 6]   48     std   suma_secundaria                       ; Actualiza suma
+                             49 
+   003C B6 00 00      [ 5]   50     lda   columnas                              ; Offset = (cols-1)*2
+   003F 4A            [ 2]   51     deca
+   0040 48            [ 2]   52     lsla
+   0041 30 86         [ 5]   53     leax  A,X                                   ; X += offset
+                             54 
+   0043 7C 00 04      [ 7]   55     inc   contador_diagonal
+ASxxxx Assembler V05.00  (Motorola 6809), page 2.
+Hexidecimal [16-Bits]
+
+
+
+   0046 B6 00 04      [ 5]   56     lda   contador_diagonal
+   0049 B1 00 00      [ 5]   57     cmpa  filas                                 ; Compara con FILAS
+   004C 25 E6         [ 3]   58     blo   bucle_suma_secundaria
+                             59 
+                             60     ; ========== DECISIÓN E IMPRESIÓN ==========
+   004E FC 00 00      [ 6]   61     ldd   suma_principal
+   0051 10 B3 00 02   [ 8]   62     cmpd  suma_secundaria
+   0055 25 32         [ 3]   63     blo   imprimir_principal
+   0057 20 00         [ 3]   64     bra   imprimir_secundaria
+                             65 
+   0059                      66 imprimir_secundaria:
+   0059 8E E0 00      [ 3]   67     ldx   #m
+   005C B6 00 00      [ 5]   68     lda   columnas
+   005F 4A            [ 2]   69     deca
+   0060 48            [ 2]   70     lsla
+   0061 30 86         [ 5]   71     leax  A,X                                   ; X = [0][cols-1]
+   0063 7F 00 04      [ 7]   72     clr   contador_diagonal
+   0066 86 0A         [ 2]   73     lda   #'\n
+   0068 B7 FF 00      [ 5]   74     sta   pantalla
+                             75 
+   006B                      76 bucle_imprimir_secundaria:
+   006B EC 84         [ 5]   77     ldd   ,X
+   006D BD 00 00      [ 8]   78     jsr   imprime_decimal
+   0070 86 09         [ 2]   79     lda   #'\t
+   0072 B7 FF 00      [ 5]   80     sta   pantalla
+                             81 
+   0075 B6 00 00      [ 5]   82     lda   columnas
+   0078 4A            [ 2]   83     deca
+   0079 48            [ 2]   84     lsla
+   007A 30 86         [ 5]   85     leax  A,X                                   ; Siguiente elemento
+   007C 7C 00 04      [ 7]   86     inc   contador_diagonal
+   007F B6 00 04      [ 5]   87     lda   contador_diagonal
+   0082 B1 00 00      [ 5]   88     cmpa  filas                                 ; Solo compara con FILAS
+   0085 25 E4         [ 3]   89     blo   bucle_imprimir_secundaria
+   0087 20 27         [ 3]   90     bra   fin_impresion
+                             91 
+   0089                      92 imprimir_principal:
+   0089 8E E0 00      [ 3]   93     ldx   #m                                    ; X = [0][0]
+   008C 7F 00 04      [ 7]   94     clr   contador_diagonal
+   008F 86 0A         [ 2]   95     lda   #'\n
+   0091 B7 FF 00      [ 5]   96     sta   pantalla
+                             97 
+   0094                      98 imprimir_bucle_principal:
+   0094 EC 84         [ 5]   99     ldd   ,X
+   0096 BD 00 00      [ 8]  100     jsr   imprime_decimal
+   0099 86 09         [ 2]  101     lda   #'\t
+   009B B7 FF 00      [ 5]  102     sta   pantalla
+                            103 
+   009E B6 00 00      [ 5]  104     lda   columnas                              ; Offset = (cols+1)*2
+   00A1 4C            [ 2]  105     inca
+   00A2 48            [ 2]  106     lsla
+   00A3 30 86         [ 5]  107     leax  A,X                                   ; Siguiente elemento
+   00A5 7C 00 04      [ 7]  108     inc   contador_diagonal
+   00A8 B6 00 04      [ 5]  109     lda   contador_diagonal
+   00AB B1 00 00      [ 5]  110     cmpa  filas
+ASxxxx Assembler V05.00  (Motorola 6809), page 3.
+Hexidecimal [16-Bits]
+
+
+
+   00AE 25 E4         [ 3]  111     blo   imprimir_bucle_principal
+                            112 
+   00B0                     113 fin_impresion:
+   00B0 35 B6         [10]  114     puls  X,Y,D,PC
+ASxxxx Assembler V05.00  (Motorola 6809), page 4.
+Hexidecimal [16-Bits]
+
+Symbol Table
+
+    .__.$$$.       =   2710 L   |     .__.ABS.       =   0000 G
+    .__.CPU.       =   0000 L   |     .__.H$L.       =   0001 L
+  2 bucle_imprimir     006B R   |   2 bucle_suma_pri     000D R
+  2 bucle_suma_sec     0034 R   |     columnas           **** GX
+  2 contador_diago     0004 R   |     filas              **** GX
+  2 fin_impresion      00B0 R   |     imprime_decima     **** GX
+  2 imprimir_bucle     0094 R   |   2 imprimir_princ     0089 R
+  2 imprimir_secun     0059 R   |     m              =   E000 
+  2 mostrar_diagon     0005 GR  |     pantalla       =   FF00 
+  2 suma_principal     0000 R   |   2 suma_secundari     0002 R
+
+ASxxxx Assembler V05.00  (Motorola 6809), page 5.
+Hexidecimal [16-Bits]
+
+Area Table
+
+[_CSEG]
+   0 _CODE            size    0   flags C080
+   2 BSS              size   B2   flags  100
+[_DSEG]
+   1 _DATA            size    0   flags C0C0
+

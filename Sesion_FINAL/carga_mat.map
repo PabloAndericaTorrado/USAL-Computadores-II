@@ -1,0 +1,47 @@
+ASxxxx Linker V05.00,  page 1.
+Hexidecimal  [16-Bits]
+
+Area                       Addr        Size        Decimal Bytes (Attributes)
+--------------------       ----        ----        ------- ----- ------------
+.  .ABS.                   0000        0000 =           0. bytes (ABS,OVR,CSEG)
+
+         Value  Global                             Global Defined In Module
+         -----  --------------------------------   ------------------------
+          0000  l__DATA                         
+          0000  s__DATA                         
+          0000  .__.ABS.                           carga_mat
+          0100  s__CODE                         
+          0132  l__CODE                         
+
+ASxxxx Linker V05.00,  page 2.
+Hexidecimal  [16-Bits]
+[ Bank == _CSEG ]
+
+Area                       Addr        Size        Decimal Bytes (Attributes)
+--------------------       ----        ----        ------- ----- ------------
+_CODE                      0100        0132 =         306. bytes (REL,CON,CSEG)
+
+         Value  Global                             Global Defined In Module
+         -----  --------------------------------   ------------------------
+          0104  imprime_cadena                     imprimir
+          0111  imprime_byte                       imprimir
+          0145  imprime_decimal                    imprimir
+          018C  leeByte                            leer
+          01D3  leeDecimal                         leer
+          020D  carga_mat                          carga_mat
+
+ASxxxx Linker V05.00,  page 3.
+
+Files Linked                              [ module(s) ]
+
+imprimir.rel                              [ imprimir ]
+leer.rel                                  [ leer ]
+carga_mat.rel                             [ carga_mat ]
+
+ASxxxx Linker V05.00,  page 4.
+
+User Base Address Definitions
+
+_CODE=0x100
+
+

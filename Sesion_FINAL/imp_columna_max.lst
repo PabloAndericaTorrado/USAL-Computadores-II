@@ -1,0 +1,169 @@
+ASxxxx Assembler V05.00  (Motorola 6809), page 1.
+Hexidecimal [16-Bits]
+
+
+
+                              1 .module imp_columna_max                             ; Define módulo (omitible en AS6809)
+                              2 .globl mostrar_columna_maxima                       ; Exporta etiqueta de entrada
+                              3 .globl filas, columnas, imprime_decimal             ; Importa etiquetas globales de main y rutina de impresión
+                              4 
+                     FF00     5 pantalla    .equ 0xFF00                             ; Dirección del registro de pantalla
+                     E000     6 m           .equ 0xE000                             ; Dirección base de matriz en RAM
+                              7 
+   0000 00 00                 8 max_val:        .word 0                             ; Variable: valor máximo encontrado
+   0002 00                    9 max_col:        .byte 0                             ; Variable: índice de columna del primer máximo
+   0003 00                   10 col_actual:    .byte 0                              ; Variable: índice de columna en iteración
+   0004 00                   11 fil_actual:    .byte 0                              ; Variable: índice de fila en iteración
+                             12 
+   0005 00 00                13 min_suma:        .word 0                            ; Variable: suma mínima entre columnas candidatas
+   0007 00 00                14 sum_col:        .word 0                             ; Variable: suma acumulada de la columna actual
+   0009 00                   15 tiene_maximo:  .byte 0                              ; 1 si la columna actual tiene al menos un máximo
+   000A 00 00                16 salto_fila:    .word 0                              ; Desplazamiento (bytes) para avanzar de fila en misma columna
+                             17 
+   000C                      18 mostrar_columna_maxima:
+   000C 34 16         [ 8]   19     pshs  A,B,X                                    ; Guarda A, B y X en pila
+   000E CC 00 00      [ 3]   20     ldd   #0                                       ; D = 0
+   0011 FD 00 00      [ 6]   21     std   max_val                                  ; Inicializa max_val = 0
+   0014 7F 00 02      [ 7]   22     clr   max_col                                  ; max_col = 0
+   0017 10 8E E0 00   [ 4]   23     ldy   #m                                       ; Y apunta al inicio de la matriz
+   001B 7F 00 03      [ 7]   24     clr   col_actual                               ; col_actual = 0
+   001E 7F 00 04      [ 7]   25     clr   fil_actual                               ; fil_actual = 0
+                             26 
+   0021                      27 busca_max:
+   0021 EC A4         [ 5]   28     ldd   ,Y                                       ; D = [Y] (elemento actual)
+   0023 10 B3 00 00   [ 8]   29     cmpd  max_val                                  ; Compara D con max_val
+   0027 23 09         [ 3]   30     bls   continuar                                ; Si D ≤ max_val salta a continuar
+   0029 FD 00 00      [ 6]   31     std   max_val                                  ; Sino, max_val = D
+   002C B6 00 03      [ 5]   32     lda   col_actual                               ; A = índice de columna actual
+   002F B7 00 02      [ 5]   33     sta   max_col                                  ; max_col = A
+                             34 
+   0032                      35 continuar:
+   0032 31 22         [ 5]   36     leay  2,Y                                      ; Y += 2 (siguiente palabra)
+   0034 7C 00 03      [ 7]   37     inc   col_actual                               ; col_actual++
+   0037 B6 00 03      [ 5]   38     lda   col_actual                               ; A = col_actual
+   003A B1 00 00      [ 5]   39     cmpa  columnas                                 ; Compara con total de columnas
+   003D 25 06         [ 3]   40     blo   columna_valida                           ; Si < columnas sigue en misma fila
+   003F 7F 00 03      [ 7]   41     clr   col_actual                               ; Sino, col_actual = 0
+   0042 7C 00 04      [ 7]   42     inc   fil_actual                               ; fil_actual++
+                             43 
+   0045                      44 columna_valida:
+   0045 B6 00 04      [ 5]   45     lda   fil_actual                               ; A = fil_actual
+   0048 B1 00 00      [ 5]   46     cmpa  filas                                    ; Compara con total de filas
+   004B 25 D4         [ 3]   47     blo   busca_max                                ; Si < filas vuelve a buscar
+                             48 
+   004D B6 00 00      [ 5]   49     lda   columnas                                 ; A = número de columnas
+   0050 48            [ 2]   50     lsla                                           ; A = A*2 (tamaño fila en bytes)
+   0051 1F 89         [ 6]   51     tfr   A,B                                      ; B = fila_inc baja
+   0053 4F            [ 2]   52     clra                                           ; A = 0 (fila_inc alta)
+   0054 FD 00 0A      [ 6]   53     std   salto_fila                               ; salto_fila = A:B
+                             54 
+   0057 CC FF FF      [ 3]   55     ldd   #0xFFFF                                  ; D = $FFFF
+ASxxxx Assembler V05.00  (Motorola 6809), page 2.
+Hexidecimal [16-Bits]
+
+
+
+   005A FD 00 05      [ 6]   56     std   min_suma                                 ; min_suma = 0xFFFF (infinito)
+   005D 7F 00 03      [ 7]   57     clr   col_actual                               ; col_actual = 0
+                             58 
+   0060                      59 bucle_col:
+   0060 CC 00 00      [ 3]   60     ldd   #0                                       ; D = 0
+   0063 FD 00 07      [ 6]   61     std   sum_col                                  ; sum_col = 0
+   0066 7F 00 09      [ 7]   62     clr   tiene_maximo                             ; tiene_maximo = 0
+   0069 7F 00 04      [ 7]   63     clr   fil_actual                               ; fil_actual = 0
+                             64 
+   006C F6 00 03      [ 5]   65     ldb   col_actual                               ; B = col_actual
+   006F 58            [ 2]   66     lslb                                          ; B = B*2 (offset columna en bytes)
+   0070 8E E0 00      [ 3]   67     ldx   #m                                       ; X = base matriz
+   0073 3A            [ 3]   68     abx                                           ; X += B → apunta fila 0, col_actual
+                             69 
+   0074                      70 suma_filas:
+   0074 EC 84         [ 5]   71     ldd   ,X                                      ; D = elemento [X]
+   0076 10 B3 00 00   [ 8]   72     cmpd  max_val                                  ; Compara con el máximo global
+   007A 26 05         [ 3]   73     bne   no_max                                   ; Si ≠ salto a no_max
+   007C 86 01         [ 2]   74     lda   #1                                       ; A = 1
+   007E B7 00 09      [ 5]   75     sta   tiene_maximo                             ; tiene_maximo = 1
+                             76 
+   0081                      77 no_max:
+   0081 F3 00 07      [ 7]   78     addd  sum_col                                  ; sum_col += D
+   0084 FD 00 07      [ 6]   79     std   sum_col                                  ; Guarda sum_col
+   0087 FC 00 0A      [ 6]   80     ldd   salto_fila                               ; D = salto_fila
+   008A 30 8B         [ 8]   81     leax  D,X                                      ; X += D → siguiente fila misma columna
+   008C 7C 00 04      [ 7]   82     inc   fil_actual                               ; fil_actual++
+   008F B6 00 04      [ 5]   83     lda   fil_actual                               ; A = fil_actual
+   0092 B1 00 00      [ 5]   84     cmpa  filas                                    ; Compara con total de filas
+   0095 25 DD         [ 3]   85     blo   suma_filas                               ; Si < filas repite
+                             86 
+   0097 B6 00 09      [ 5]   87     lda   tiene_maximo                             ; A = flag
+   009A 27 12         [ 3]   88     beq   sig_col                                  ; Si 0 salta sig_col
+                             89 
+   009C FC 00 07      [ 6]   90     ldd   sum_col                                  ; D = sum_col
+   009F 10 B3 00 05   [ 8]   91     cmpd  min_suma                                 ; Compara con min_suma
+   00A3 24 09         [ 3]   92     bhs   sig_col                                  ; Si ≥ no actualiza
+   00A5 FD 00 05      [ 6]   93     std   min_suma                                 ; Sino, min_suma = sum_col
+   00A8 B6 00 03      [ 5]   94     lda   col_actual                               ; A = col_actual
+   00AB B7 00 02      [ 5]   95     sta   max_col                                  ; max_col = A
+                             96 
+   00AE                      97 sig_col:
+   00AE 7C 00 03      [ 7]   98     inc   col_actual                               ; col_actual++
+   00B1 B6 00 03      [ 5]   99     lda   col_actual                               ; A = col_actual
+   00B4 B1 00 00      [ 5]  100     cmpa  columnas                                 ; Compara con total de columnas
+   00B7 25 A7         [ 3]  101     blo   bucle_col                                ; Si < salta a bucle_col
+                            102 
+   00B9 86 0A         [ 2]  103     lda   #'\n                                    ; A = LF
+   00BB B7 FF 00      [ 5]  104     sta   pantalla                                 ; Imprime salto de línea
+                            105 
+   00BE F6 00 02      [ 5]  106     ldb   max_col                                  ; B = columna seleccionada
+   00C1 58            [ 2]  107     lslb                                          ; B = B*2
+   00C2 8E E0 00      [ 3]  108     ldx   #m                                       ; X = base matriz
+   00C5 3A            [ 3]  109     abx                                           ; X += B → inicio columna seleccionada
+                            110 
+ASxxxx Assembler V05.00  (Motorola 6809), page 3.
+Hexidecimal [16-Bits]
+
+
+
+   00C6 F6 00 00      [ 5]  111     ldb   filas                                    ; B = filas
+   00C9 34 04         [ 6]  112     pshs  B                                        ; Push contador de filas
+                            113 
+   00CB                     114 imprime_col:
+   00CB EC 84         [ 5]  115     ldd   ,X                                      ; D = elemento [X]
+   00CD BD 00 00      [ 8]  116     jsr   imprime_decimal                         ; Llama a subrutina de impresión decimal
+   00D0 86 09         [ 2]  117     lda   #'\t                                    ; A = tabulador
+   00D2 B7 FF 00      [ 5]  118     sta   pantalla                                 ; Imprime tabulador
+   00D5 FC 00 0A      [ 6]  119     ldd   salto_fila                               ; D = salto_fila
+   00D8 30 8B         [ 8]  120     leax  D,X                                      ; X += D → siguiente fila misma columna
+   00DA 6A E4         [ 6]  121     dec   ,S                                       ; Decrementa contador de filas de la pila
+   00DC 26 ED         [ 3]  122     bne   imprime_col                              ; Si ≠ 0 repite
+                            123 
+   00DE 35 04         [ 6]  124     puls  B                                        ; Recupera B
+   00E0 35 96         [ 9]  125     puls  A,B,X,PC                                 ; Recupera A,B,X y retorna al llamador
+ASxxxx Assembler V05.00  (Motorola 6809), page 4.
+Hexidecimal [16-Bits]
+
+Symbol Table
+
+    .__.$$$.       =   2710 L   |     .__.ABS.       =   0000 G
+    .__.CPU.       =   0000 L   |     .__.H$L.       =   0001 L
+  0 bucle_col          0060 R   |   0 busca_max          0021 R
+  0 col_actual         0003 R   |   0 columna_valida     0045 R
+    columnas           **** GX  |   0 continuar          0032 R
+  0 fil_actual         0004 R   |     filas              **** GX
+  0 imprime_col        00CB R   |     imprime_decima     **** GX
+    m              =   E000     |   0 max_col            0002 R
+  0 max_val            0000 R   |   0 min_suma           0005 R
+  0 mostrar_column     000C GR  |   0 no_max             0081 R
+    pantalla       =   FF00     |   0 salto_fila         000A R
+  0 sig_col            00AE R   |   0 sum_col            0007 R
+  0 suma_filas         0074 R   |   0 tiene_maximo       0009 R
+
+ASxxxx Assembler V05.00  (Motorola 6809), page 5.
+Hexidecimal [16-Bits]
+
+Area Table
+
+[_CSEG]
+   0 _CODE            size   E2   flags C180
+[_DSEG]
+   1 _DATA            size    0   flags C0C0
+

@@ -1,0 +1,122 @@
+ASxxxx Assembler V05.00  (Motorola 6809), page 1.
+Hexidecimal [16-Bits]
+
+
+
+                              1 .module carga_mat
+                              2 
+                     FF00     3 	pantalla .equ 0xFF00
+                     FF02     4 	teclado  .equ 0xFF02
+                     E000     5 	m .equ 0xE000
+                              6 
+                              7 .globl carga_mat
+                              8 .globl leeDecimal
+                              9 .globl imprime_decimal
+                             10 .globl imprime_cadena
+                             11 .globl imp_mat
+                             12 .globl filas, columnas  ; Referenciar variables globales
+                             13 
+                             14 ; Variables usadas en carga_mat e imp_mat
+   0000 00 00                15 tam:        .word 0
+   0002 00 00                16 contador:   .word 0
+   0004 00 00                17 contfilas:  .word 0
+   0006 00 00                18 contcol:    .word 0
+   0008 0A 44 61 74 6F 3A    19 dato:       .asciz "\nDato: "
+        20 00
+                             20 
+   0010                      21 carga_mat:
+   0010 10 8E E0 00   [ 4]   22 	ldy #m
+   0014 FD 00 00      [ 6]   23 	std tam
+   0017 CC 00 00      [ 3]   24 	ldd #0
+   001A FD 00 02      [ 6]   25 	std contador
+                             26 	;mientras contador != tam	
+   001D                      27 buclecarga:
+   001D 8E 00 08      [ 3]   28 	ldx #dato
+   0020 BD 00 00      [ 8]   29 	jsr imprime_cadena
+   0023 BD 00 00      [ 8]   30 	jsr leeDecimal
+   0026 ED A1         [ 8]   31 	std ,y++
+                             32 	
+   0028 FC 00 02      [ 6]   33 	ldd contador
+   002B C3 00 01      [ 4]   34 	addd #1
+   002E FD 00 02      [ 6]   35 	std contador						
+   0031 10 B3 00 00   [ 8]   36 	cmpd tam
+   0035 26 E6         [ 3]   37 	bne buclecarga					
+   0037 39            [ 5]   38 rts
+                             39 
+   0038                      40 imp_mat:
+   0038 10 8E E0 00   [ 4]   41 	ldy #m
+   003C B7 00 00      [ 5]   42 	sta filas
+   003F F7 00 00      [ 5]   43 	stb columnas
+   0042 4F            [ 2]   44 	clra
+   0043 5F            [ 2]   45 	clrb
+   0044                      46 buclefilimp:
+   0044 F6 00 04      [ 5]   47 	ldb contfilas
+   0047 F1 00 00      [ 5]   48 	cmpb filas
+   004A 2C 36         [ 3]   49 	bge fin_filas
+   004C C6 00         [ 2]   50 	ldb #0
+   004E F7 00 06      [ 5]   51 	stb contcol
+   0051                      52 buclecolimp:
+   0051 F6 00 06      [ 5]   53 		ldb contcol
+   0054 F1 00 00      [ 5]   54 		cmpb columnas
+ASxxxx Assembler V05.00  (Motorola 6809), page 2.
+Hexidecimal [16-Bits]
+
+
+
+   0057 2C 1A         [ 3]   55 		bge fin_col
+   0059 5F            [ 2]   56 		clrb
+   005A C6 09         [ 2]   57 		ldb #'\t
+   005C F7 FF 00      [ 5]   58 		stb pantalla
+   005F CC 00 00      [ 3]   59 		ldd #0
+   0062 EC A1         [ 8]   60 		ldd ,y++
+   0064 BD 00 00      [ 8]   61 		jsr imprime_decimal
+   0067 CC 00 00      [ 3]   62 		ldd #0
+   006A F6 00 06      [ 5]   63 		ldb contcol
+   006D 5C            [ 2]   64 		incb 
+   006E F7 00 06      [ 5]   65 		stb contcol
+   0071 20 DE         [ 3]   66 		bra buclecolimp
+   0073                      67 	fin_col:
+   0073 5F            [ 2]   68 	clrb
+   0074 C6 0A         [ 2]   69 	ldb #'\n
+   0076 F7 FF 00      [ 5]   70 	stb pantalla
+                             71 	
+   0079 F6 00 04      [ 5]   72 	ldb contfilas
+   007C 5C            [ 2]   73 	incb
+   007D F7 00 04      [ 5]   74 	stb contfilas
+   0080 20 C2         [ 3]   75 	bra buclefilimp
+   0082                      76 	fin_filas:
+   0082 C6 00         [ 2]   77 	ldb #0
+   0084 F7 00 04      [ 5]   78 	stb contfilas
+   0087 C6 00         [ 2]   79 	ldb #0
+   0089 F7 00 06      [ 5]   80 	stb contcol
+                             81 
+                             82 	
+   008C 39            [ 5]   83 rts
+ASxxxx Assembler V05.00  (Motorola 6809), page 3.
+Hexidecimal [16-Bits]
+
+Symbol Table
+
+    .__.$$$.       =   2710 L   |     .__.ABS.       =   0000 G
+    .__.CPU.       =   0000 L   |     .__.H$L.       =   0001 L
+  0 buclecarga         001D R   |   0 buclecolimp        0051 R
+  0 buclefilimp        0044 R   |   0 carga_mat          0010 GR
+    columnas           **** GX  |   0 contador           0002 R
+  0 contcol            0006 R   |   0 contfilas          0004 R
+  0 dato               0008 R   |     filas              **** GX
+  0 fin_col            0073 R   |   0 fin_filas          0082 R
+  0 imp_mat            0038 GR  |     imprime_cadena     **** GX
+    imprime_decima     **** GX  |     leeDecimal         **** GX
+    m              =   E000     |     pantalla       =   FF00 
+  0 tam                0000 R   |     teclado        =   FF02 
+
+ASxxxx Assembler V05.00  (Motorola 6809), page 4.
+Hexidecimal [16-Bits]
+
+Area Table
+
+[_CSEG]
+   0 _CODE            size   8D   flags C180
+[_DSEG]
+   1 _DATA            size    0   flags C0C0
+
